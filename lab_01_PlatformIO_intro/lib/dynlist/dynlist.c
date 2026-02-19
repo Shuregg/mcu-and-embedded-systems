@@ -142,3 +142,52 @@ struct DynlistNode* dynlist_next(struct DynlistNode* node) {
 void* dynlist_value(struct DynlistNode* node) {
     return node ? node->value : NULL;
 }
+
+
+// Practical task - Variant 3
+// Доработать библиотеку dynlist, добавив в неё функцию для удаления узла из списка и вставки
+// нового узла в список. Проверьте решение тестами и код программы статическим анализатором.
+// Написать тесты для проверки работы созданной функции. Проверить решение тестами и
+// статическим анализатором.
+
+/**
+* @brief Удалить узел из списка
+* @param list список
+* @param node узел, который необходимо удалить
+*/
+void dynlist_remove(Dynlist list, DynlistNode* node) {
+    if(list && list->head) {
+        DynlistNode* iter = list->head;
+        DynlistNode* iter_prev = 0;
+        while(iter) {
+            if(iter != node) {
+                iter_prev = iter;
+                iter = iter->next;
+            } else {
+                if(iter == list->head)
+                    if(iter->next)
+                        list->head = iter->next;
+                else
+                    iter_prev->next = iter->next ? iter->next : NULL;
+                if (list->clean_value_cb)
+                    list->clean_value_cb(iter->value);
+                free(iter);
+            }
+        }
+    }
+}
+
+/* Вставить узел со значением *value после узал pos*/
+void dynlist_insert(Dynlist list, DynlistNode* pos, void* value) {
+    if(list && list->head && pos) {
+        DynlistNode* iter;
+        for(iter = list->head; iter != NULL; iter = iter->next) {
+            if(iter == pos) {
+                DynlistNode* node_new = make_new_node(value);
+                if(iter->next)
+                    node_new->next = iter->next;
+                iter->next = node_new;
+            }
+        }
+    }
+}
