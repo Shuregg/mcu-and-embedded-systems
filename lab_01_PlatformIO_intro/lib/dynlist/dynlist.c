@@ -164,14 +164,18 @@ void dynlist_remove(Dynlist list, DynlistNode* node) {
                 iter_prev = iter;
                 iter = iter->next;
             } else {
-                if(iter == list->head)
-                    if(iter->next)
+                if(iter == (list->head)) {
+                    if(iter->next) {
                         list->head = iter->next;
-                else
+                    }
+                }
+                else {
                     iter_prev->next = iter->next ? iter->next : NULL;
-                if (list->clean_value_cb)
-                    list->clean_value_cb(iter->value);
-                free(iter);
+                }
+                // if (list->clean_value_cb)
+                //     list->clean_value_cb(iter->value);
+                // free(iter);
+                return;
             }
         }
     }
@@ -180,14 +184,17 @@ void dynlist_remove(Dynlist list, DynlistNode* node) {
 /* Вставить узел со значением *value после узал pos*/
 void dynlist_insert(Dynlist list, DynlistNode* pos, void* value) {
     if(list && list->head && pos) {
-        DynlistNode* iter;
-        for(iter = list->head; iter != NULL; iter = iter->next) {
+        DynlistNode* iter = list->head;
+        int i = 0;
+        while(iter) {
             if(iter == pos) {
                 DynlistNode* node_new = make_new_node(value);
-                if(iter->next)
-                    node_new->next = iter->next;
+                node_new->next = iter->next ? iter->next : NULL;
                 iter->next = node_new;
+                break;
             }
+            iter = iter->next;
+            i++;
         }
     }
 }

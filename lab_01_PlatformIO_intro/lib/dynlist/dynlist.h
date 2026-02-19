@@ -14,6 +14,8 @@ extern "C" {
     struct DynlistNode *dynlist_begin(Dynlist list);
     struct DynlistNode *dynlist_next(struct DynlistNode *node);
     void *dynlist_value(struct DynlistNode *node);
+    void dynlist_remove(Dynlist list, DynlistNode* node);
+    void dynlist_insert(Dynlist list, DynlistNode* pos, void* value);
 #ifdef __cplusplus
 }
 #endif

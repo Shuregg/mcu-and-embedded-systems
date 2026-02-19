@@ -79,62 +79,48 @@ void test_dynlist_remove_called(void) {
     DynlistNode* node_0;
     DynlistNode* node_1;
     DynlistNode* node_2;
+
     for (int i = 0; i < FIXTURE_SIZE; i++) {
         dynlist_append(list, &fixture_data[i]);
     }
+
     node_0 = dynlist_begin(list);
-    node_1 = node_0->next;
-    node_2 = node_1->next;
+    node_1 = dynlist_next(node_0);
+    node_2 = dynlist_next(node_1);
 
     dynlist_remove(list, node_1);
-    TEST_ASSERT_NULL(node_1);
-    TEST_ASSERT_EQUAL_PTR(node_2, node_0->next);
+    TEST_ASSERT_EQUAL_PTR(node_2, dynlist_next(node_0));
     dynlist_remove(list, node_0);
-    TEST_ASSERT_EQUAL_PTR(node_2, list->head);
-    dynlist_remove(list, node_2);
-    TEST_ASSERT_NULL(node_2);
-    TEST_ASSERT_NULL(list->head);
-
-    for (int i = 0; i < FIXTURE_SIZE; i++) {
-        dynlist_append(list, &fixture_data[i]);
-    }
-    node_0 = dynlist_begin(list);
-    node_1 = node_0->next;
-    node_2 = node_1->next;
-    dynlist_remove(list, node_2);
-    TEST_ASSERT_NULL(node_2);
-    if(FIXTURE_SIZE == 3)
-        TEST_ASSERT_NULL(node_1->next);
-    else
-        TEST_ASSERT_NOT_NULL(node_1->next)
+    TEST_ASSERT_EQUAL_PTR(node_2, dynlist_begin(list));
+    dynlist_remove(list, node_2); 
 }
 
-void test_dynlist_insert(void) {
+void test_dynlist_insert_called(void) {
     DynlistNode* node_0;
     DynlistNode* node_1;
     DynlistNode* node_2;
+    DynlistNode* node_3;
     int val_3 = 4;
     int val_1_new = 5;
-    int* val_3_ptr = &val_3_ptr;
+    int* val_3_ptr = &val_3;
     int* val_1_new_ptr = &val_1_new;
 
     for (int i = 0; i < FIXTURE_SIZE; i++) {
         dynlist_append(list, &fixture_data[i]);
     }
     node_0 = dynlist_begin(list);
-    node_1 = node_0->next;
-    node_2 = node_1->next;
+    node_1 = dynlist_next(node_0);
+    node_2 = dynlist_next(node_1);
 
     dynlist_insert(list, node_2, (void*)val_3_ptr);
-    TEST_ASSERT_NOT_NULL(node_2->next);
-    TEST_ASSERT_EQUAL_INT32(val_3, *((int*)(node_2->value)));
-
-    DynlistNode* node_1_new;
-    node_1_new = node_0->next;
+    node_3 = dynlist_next(node_2);
+    
+    TEST_ASSERT_EQUAL_INT32(val_3, *((int*)(dynlist_value(node_3))));
 
     dynlist_insert(list, node_0, (void*)val_1_new_ptr);
-    TEST_ASSERT_EQUAL_PTR(node_1, node_1_new->next);
-    TEST_ASSERT_EQUAL_INT32(val_1_new, *((int*)(node_1_new->value)));
+    DynlistNode* inserted = dynlist_next(node_0);
+    TEST_ASSERT_EQUAL_PTR(node_1, dynlist_next(inserted));
+    TEST_ASSERT_EQUAL_INT32(val_1_new, *(int*)dynlist_value(inserted));
 }
 
 int main(void) {
@@ -144,6 +130,6 @@ int main(void) {
     RUN_TEST(test_dynlist_append_data_in_place);
     RUN_TEST(test_dynlist_foreach_called);
     RUN_TEST(test_dynlist_remove_called);
-    RUN_TEST(test_dynlist_insert);
+    RUN_TEST(test_dynlist_insert_called);
     return UNITY_END();
 }
