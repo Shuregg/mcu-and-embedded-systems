@@ -164,17 +164,15 @@ void dynlist_remove(Dynlist list, DynlistNode* node) {
                 iter_prev = iter;
                 iter = iter->next;
             } else {
-                if(iter == (list->head)) {
-                    if(iter->next) {
-                        list->head = iter->next;
-                    }
-                }
-                else {
+                if(iter == (list->head))
+                    list->head = iter->next ? iter->next : NULL;
+                else
                     iter_prev->next = iter->next ? iter->next : NULL;
-                }
-                // if (list->clean_value_cb)
-                //     list->clean_value_cb(iter->value);
-                // free(iter);
+
+                if (list->clean_value_cb)
+                    list->clean_value_cb(iter->value);
+                free(iter);
+                iter = NULL;
                 return;
             }
         }

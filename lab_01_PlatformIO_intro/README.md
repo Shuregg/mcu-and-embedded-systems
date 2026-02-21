@@ -551,6 +551,10 @@ helloworld     native/test_dynlist  PASSED    00:00:01.433
 =============================================== 4 test cases: 4 succeeded in 00:00:01.433 ===============================================
 ```
 
+### Byte order 
+
+Little-endian
+
 ## 10. Debugging
 
 ## 11. Static Code Analysis
@@ -607,3 +611,28 @@ void dynlist_insert(Dynlist list, DynlistNode* pos, void* value);
 ```
 Написать тесты для проверки работы созданной функции. Проверить решение тестами и
 статическим анализатором.
+
+
+### UB examples
+
+#### Dereferencing a pointer that has not yet been definitely initialized
+
+```c
+int* ptr;
+*ptr = 100;
+```
+
+#### Dereferencing a NULL pointer
+
+```c
+int* ptr = 0;
+*ptr = 100;
+```
+
+### MISRA rules example
+|Check Id| Check Name|Supported|  Category|
+|-| -| -| -|
+| MISRA23_9.3 | 9.3 Arrays shall not be partially initialized | Yes | Required |
+| MISRA23_13.6 | 13.6 The operand of the sizeof operator shall not contain any expression which has potential side effects | Yes | Mandatory |
+| MISRA23_2.3 | 2.3 A project should not contain unused type declarations | Yes | Advisory |
+| MISRA23_4.2 | 4.2 Trigraphs should not be used | Yes | Advisory |
