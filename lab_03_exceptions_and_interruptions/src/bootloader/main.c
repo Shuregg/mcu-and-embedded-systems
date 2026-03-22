@@ -107,23 +107,6 @@ void do_UsageFault() {
     // Например, деление на ноль, Доступ к невыровненным данным
     int a = 4;
     int b = a / 0;
-
-    uint32_t ufsr = SCB->UFSR;
-
-    printf("\r\n UFSR = 0x%x", ufsr);
-    if(ufsr & 1)
-        printf("\r\nUNDEFINSTR");
-    if(ufsr & 2)
-        printf("\r\nINVSTATE");
-    if(ufsr & 4)
-        printf("\r\nINVPC");
-    if(ufsr & 8)
-        printf("\r\nNOCP");
-    if(ufsr & 256)
-        printf("\r\nUNALIGNED");
-    if(ufsr & 512)
-        printf("\r\nDIVBYZERO");
-
 }
 
 void do_MemFault() {
