@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <vterm.h>
+#include <stdint.h>
 
 #define APP_SRAM_OFFSET 0x24000000
 #define NUM_COMMANDS 6
@@ -46,10 +47,15 @@ uint8_t read_handler_index() {
 void enable_fault_handlers() {
     // Включить генерацию исключений для UsageFault; cм. PM0253, п. 4.3.7 на стр. 200
     // SCB->CCR ...
-
-
+    SCB->CCR |= (1UL << 3);
+    
     // Разрешить генерацию исключений; см. PM0253, п. 4.3.9 на
     // стр. 204 SCB->SHCSR ...
+    SCB->SHCSR |= (7UL << 16);
+    // [18] USGFAULTENA UsageFault enable bit, set to 1 to enable(1)
+    // [17] BUSFAULTENA BusFault enable bit, set to 1 to enable(1)
+    // [16] MEMFAULTENA MemManage enable bit, set to 1 to enable(1)
+
 }
 
 int main() {
@@ -99,6 +105,25 @@ void do_BootSRAM() {
 void do_UsageFault() {
     // Отслеживаемые ошибки задаются в SCB->UFSR (PM0253.rev5 стр. 209 )
     // Например, деление на ноль, Доступ к невыровненным данным
+    int a = 4;
+    int b = a / 0;
+
+    uint32_t ufsr = SCB->UFSR;
+
+    printf("\r\n UFSR = 0x%x", ufsr);
+    if(ufsr & 1)
+        printf("\r\nUNDEFINSTR");
+    if(ufsr & 2)
+        printf("\r\nINVSTATE");
+    if(ufsr & 4)
+        printf("\r\nINVPC");
+    if(ufsr & 8)
+        printf("\r\nNOCP");
+    if(ufsr & 256)
+        printf("\r\nUNALIGNED");
+    if(ufsr & 512)
+        printf("\r\nDIVBYZERO");
+
 }
 
 void do_MemFault() {
@@ -111,6 +136,7 @@ void do_MemFault() {
 void do_BusFault() {
     // Ошибка доступа к памяти по шине
     // Например, попытка чтения из отсутствующей внешней памяти (0х60000000)
+    uint32_t a = (*(uint32_t*)((void*)0x60000000));
 }
 
 void do_Assert() { assert(!"Assertion example"); }
