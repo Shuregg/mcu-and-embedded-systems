@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 #define APP_SRAM_OFFSET 0x24000000
-#define APP_SRAM_END 0x24040000
-#define APP_FLASH1_OFFSET 0x08010000
+#define APP_SRAM_END 0x2407FFFF
+#define APP_FLASH1_OFFSET FLASH_BANK1_BASE
 #define APP_FLASH1_END 0x080FFFFF
 #define NUM_COMMANDS 6
 #if NUM_COMMANDS > 9
@@ -29,7 +29,7 @@ static void do_Assert();
 static void do_User();
 static void do_BootFlash();
 
-int check_axi_sram_app_valid();
+int check_sram_app_valid();
 int check_flash_app_valid();
 
 typedef void (*handler_func_t)();
@@ -40,7 +40,7 @@ handler_func_t handlers[NUM_COMMANDS] = {
     do_BusFault,
     do_MemFault,
     do_Assert,
-    do_User
+    /*do_User*/ do_BootFlash
 };
 uint8_t read_handler_index() {
     while (vterm_keypressed() != 0);
@@ -82,7 +82,7 @@ int main() {
             switch (handler_index)
             {
             case 0: {
-                if(check_axi_sram_app_valid()) {
+                if(check_sram_app_valid()) {
                     for(int i = 3; i > 0; i--) {
                         printf("\r\n Run app form AXI-SRAM in %0d...", i);
                         delay(1000);
@@ -151,6 +151,7 @@ void do_UsageFault() {
     // Например, деление на ноль, Доступ к невыровненным данным
     int a = 4;
     int b = a / 0;
+    printf("b = a / 0 = %d", b);
 }
 
 void do_MemFault() {
@@ -164,53 +165,64 @@ void do_BusFault() {
     // Ошибка доступа к памяти по шине
     // Например, попытка чтения из отсутствующей внешней памяти (0х60000000)
     uint32_t a = (*(uint32_t*)((void*)0x60000000));
+    printf("Try to read from 0x60000000: 0x%lx", a);
 }
 
 void do_Assert() { assert(!"Assertion example"); }
 void do_User() { puts(u8"\r\nВнезапно выпал снег\n"); }
 
 // Task 2 - Check and Autorun
-int check_axi_sram_app_valid() {
-    int valid;
-    int msp_valid = 0;
-    int pc_valid = 0;
+int check_sram_app_valid() {
 
-    uint32_t msp = *(uint32_t*)(APP_SRAM_OFFSET);
-    uint32_t pc  = *(uint32_t*)(APP_SRAM_OFFSET + 4);
+    uint32_t app_sp = *(uint32_t*)(APP_SRAM_OFFSET);
+    uint32_t app_pc = *(uint32_t*)(APP_SRAM_OFFSET + 4);
 
-    if(msp >= APP_SRAM_OFFSET && msp < APP_SRAM_END && msp & 0x7 == 0) {
-        msp_valid = 1;
-    }
+    // Check MSP address
+    int app_sp_valid = (app_sp >= APP_SRAM_OFFSET && app_sp <= APP_SRAM_END /*&& ((app_sp % 0x400) == 0)*/);
 
-    if(pc >= APP_SRAM_OFFSET && pc < APP_SRAM_END && pc & 1 == 1) {
-        pc_valid = 1;
-    }
+    // Check Reset Handler address
+    int app_pc_valid = (app_pc >= APP_SRAM_OFFSET && app_pc <= APP_SRAM_END && ((app_pc & 1) == 1));
 
-    valid = msp_valid && pc_valid;
-    return valid;
+    return app_sp_valid && app_pc_valid;
 }
 
-// Task 3 - Boot from Flash
+// Task 3 - Boot Load from FLASH
 int check_flash_app_valid() {
-    int valid;
-    int msp_valid = 0;
-    int pc_valid = 0;
+    uint32_t app_sp = *(volatile uint32_t*)(APP_FLASH1_OFFSET);
+    uint32_t app_pc = *(volatile uint32_t*)(APP_FLASH1_OFFSET + 4);
 
-    uint32_t msp = *(uint32_t*)(APP_FLASH1_OFFSET);
-    uint32_t pc  = *(uint32_t*)(APP_FLASH1_OFFSET + 4);
-
-    if(msp >= APP_FLASH1_OFFSET && msp < APP_FLASH1_END && msp & 0x7 == 0) {
-        msp_valid = 1;
-    }
-
-    if(pc >= APP_FLASH1_OFFSET && pc < APP_FLASH1_END && pc & 1 == 1) {
-        pc_valid = 1;
-    }
-
-    valid = msp_valid && pc_valid;
-    return valid;
+    int sp_valid = (app_sp >= APP_SRAM_OFFSET && app_sp <= APP_SRAM_END /*&& ((app_sp % 0x400) == 0)*/);
+    int pc_valid = (app_pc >= APP_FLASH1_OFFSET && app_pc <= APP_FLASH1_END) && (app_pc & 1);
+    
+    return sp_valid && pc_valid;
 }
 
-static void do_BootFlash() {
-    
+void do_BootFlash() {
+    printf("\nJumping to FLASH1 app at %08lx....\n", APP_FLASH1_OFFSET);
+
+    // 1) Определить ТВП приложения, адреса начала стека и точки входа приложения
+    const uint32_t* app_IV = (uint32_t*)(APP_FLASH1_OFFSET);
+    uint32_t app_end_stack = (*((uint32_t *)(app_IV)));
+    void* app_entry = (void *)(*((uint32_t *)(APP_FLASH1_OFFSET + 4)));
+
+    // Доп.1.) Признак того, что был запуск приложения bootloader_SP != 0
+    bootloader_SP = __get_MSP();
+
+    // 2) Отключить все прерывания
+    __disable_irq();
+
+    // 3) заменить текущий адрес стека на начальный адрес стека приложения
+    __set_MSP(app_end_stack);
+
+    // 4) задать новый адрес таблицы векторов прерываний
+    SCB->VTOR = app_IV;
+
+    // Доп.2) Заменили обработчика HardFault в ТВП на собственный
+    NVIC_SetVector(HardFault_IRQn, (uint32_t)HardFault_Handler);
+
+    // Инвалидация кеша инстуркций у ядра Cortex-M7
+    SCB_InvalidateICache();
+
+    // 5) Безусловный переходapp_IV на точку входу
+    __ASM volatile("bx %0" ::"r"(app_entry));
 }
