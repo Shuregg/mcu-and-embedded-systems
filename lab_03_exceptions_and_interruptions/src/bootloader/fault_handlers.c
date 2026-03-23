@@ -32,29 +32,44 @@ void HardFault_Handler() {
 }
 
 void UsageFault_Handler() {
-    uint32_t ufsr = SCB->UFSR;
+    uint32_t ufsr = SCB->CFSR & SCB_CFSR_USGFAULTSR_Msk;
     puts("\r\nUsage Fault exception!");
-    printf("\r\n UFSR = 0x%x", ufsr);
-    if(ufsr & 1)
+    printf("\r\n UFSR = 0x%lx", ufsr);
+    if(ufsr & SCB_CFSR_UNDEFINSTR_Msk)
         printf("\r\nUNDEFINSTR");
-    if(ufsr & 2)
+    if(ufsr & SCB_CFSR_INVSTATE_Msk)
         printf("\r\nINVSTATE");
-    if(ufsr & 4)
+    if(ufsr & SCB_CFSR_INVPC_Msk)
         printf("\r\nINVPC");
-    if(ufsr & 8)
+    if(ufsr & SCB_CFSR_NOCP_Msk)
         printf("\r\nNOCP");
-    if(ufsr & 256)
+    if(ufsr & SCB_CFSR_UNALIGNED_Msk)
         printf("\r\nUNALIGNED");
-    if(ufsr & 512)
+    if(ufsr & SCB_CFSR_DIVBYZERO_Msk)
         printf("\r\nDIVBYZERO");
 
     NVIC_SystemReset();
 }
 
 void BusFault_Handler() {
-    uint32_t bfsr = SCB->BFSR;
+    uint32_t bfsr = SCB->CFSR & SCB_CFSR_BUSFAULTSR_Msk;
     puts("\r\nBus Fault exception!");
-    printf("\r\n UFSR = 0x%x", bfsr);
+    printf("\r\n UFSR = 0x%lx", bfsr);
+
+    if(bfsr & SCB_CFSR_IBUSERR_Msk)
+        printf("\r\nIBUSERR");
+    if(bfsr & SCB_CFSR_PRECISERR_Msk)
+        printf("\r\nPRECISERR");
+    if(bfsr & SCB_CFSR_IMPRECISERR_Msk)
+        printf("\r\nIMPRECISERR");
+    if(bfsr & SCB_CFSR_UNSTKERR_Msk)
+        printf("\r\nUNSTKERR");
+    if(bfsr & SCB_CFSR_STKERR_Msk)
+        printf("\r\nSTKERR");
+    if(bfsr & SCB_CFSR_LSPERR_Msk)
+        printf("\r\nLSPERR");
+    if(bfsr & SCB_CFSR_BFARVALID_Msk)
+        printf("\r\nBFARVALID");
 
     NVIC_SystemReset();
 }
