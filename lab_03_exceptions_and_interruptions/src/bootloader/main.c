@@ -43,11 +43,22 @@ handler_func_t handlers[NUM_COMMANDS] = {
     /*do_User*/ do_BootFlash
 };
 uint8_t read_handler_index() {
-    while (vterm_keypressed() != 0);
+    if(check_sram_app_valid()) {
+        volatile int counter = SystemCoreClock / 1000 / 6 * 5000; // Wait 5000 ms
+        printf("\r\nAutomatically boot from SRAM in 5 seconds...");
+        while (vterm_keypressed() != 0 || counter > 0) {
+            counter--;
+            if(counter == 0)
+                return 5; // Index of do_BootSRAM handler 
+        }
+    } else {
+        printf("\r\nSRAM App is not valid. Enter the number...");
+        while (vterm_keypressed() != 0);
+    }
     char str[2];
     int sz = vterm_gets(str, sizeof(str), 1);
     if (sz < 1)
-    return UINT8_MAX;
+        return UINT8_MAX;
     return str[0] >= '1' ? str[0] - '1' : UINT8_MAX;
 }
 
@@ -83,25 +94,17 @@ int main() {
             {
             case 0: {
                 if(check_sram_app_valid()) {
-                    for(int i = 3; i > 0; i--) {
-                        printf("\r\n Run app form AXI-SRAM in %0d...", i);
-                        delay(1000);
-                    }
                     handlers[handler_index]();
                 } else {
-                    printf("\r\n Not valid MSP or PC value for booting from AXI-SRAM.");
+                    printf("\r\n Invalid MSP or PC value for booting from AXI-SRAM.");
                 }
                 break;
             }
             case 6: {
                 if(check_flash_app_valid()) {
-                    for(int i = 3; i > 0; i--) {
-                        printf("\r\n Run app form FLASH (1) in %0d...", i);
-                        delay(1000);
-                    }
                     handlers[handler_index]();
                 } else {
-                    printf("\r\n Not valid MSP or PC value for booting from FLASH (1).");
+                    printf("\r\n Invalid MSP or PC value for booting from FLASH (1).");
                 }
                 break;
             }
