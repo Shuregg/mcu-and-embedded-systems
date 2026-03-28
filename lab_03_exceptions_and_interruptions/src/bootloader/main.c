@@ -6,7 +6,7 @@
 
 #define APP_SRAM_OFFSET 0x24000000
 #define APP_SRAM_ESTACK 0x24080000
-#define APP_FLASH1_OFFSET FLASH_BANK1_BASE
+#define APP_FLASH1_OFFSET 0x08080000
 #define APP_FLASH1_END 0x080FFFFF
 
 #define NO_KEYPRESSED UINT8_MAX
@@ -123,32 +123,40 @@ void do_BootSRAM() {
         printf("\nNo valid app in AXI-SRAM at 0x%08x...\n", APP_SRAM_OFFSET);
     } else {
         printf("\nJumping to AXI-SRAM app at 0x%08lx...\n", APP_SRAM_OFFSET);
-        
+
         // 1) Определить ТВП приложения, адреса начала стека и точки входа приложения
         const uint32_t* app_IV = (uint32_t*)(APP_SRAM_OFFSET);
-        uint32_t app_end_stack = (*((uint32_t *)(app_IV)));
-        void* app_entry = (void *)(*((uint32_t *)(APP_SRAM_OFFSET + 4)));
-        
-        // Доп.1.) Признак того, что был запуск приложения bootloader_SP != 0
+        uint32_t* app_sp = app_IV[0];
+        uint32_t* app_pc = app_IV[1];
+
+        printf("\n1 (0x%x)\n", app_sp);
+        printf("\n2 (0x%x)\n", app_pc);
+        printf("\n3\n");
         bootloader_SP = __get_MSP();
         
+        // Доп.1.) Признак того, что был запуск приложения bootloader_SP != 0
+        printf("\n4\n");
+
         // 2) Отключить все прерывания
         __disable_irq();
+        printf("\n5\n");
             
         // 3) заменить текущий адрес стека на начальный адрес стека приложения
-        __set_MSP(app_end_stack);
+        __set_MSP(app_sp);
+        // printf("\n6\n");
 
         // 4) задать новый адрес таблицы векторов прерываний
         SCB->VTOR = app_IV;
+        // printf("\n7\n");
         
         // Доп.2) Заменили обработчика HardFault в ТВП на собственный
         NVIC_SetVector(HardFault_IRQn, (uint32_t)HardFault_Handler);
-        
+
         // Инвалидация кеша инстуркций у ядра Cortex-M7
         SCB_InvalidateICache();
         
         // 5) Безусловный переход на точку входу
-        __ASM volatile("bx %0" ::"r"(app_entry));
+        __ASM volatile("bx %0" ::"r"(app_pc));
         
         while(1);
     }
