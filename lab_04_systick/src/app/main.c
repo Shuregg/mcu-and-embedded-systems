@@ -6,6 +6,7 @@
 #include "stm32h7xx.h"
 #include "vterm.h"
 #include <stdio.h>
+#include "crc32.h"
 
 #include "stm32h7xx_ll_bus.h"
 #include "stm32h7xx_ll_gpio.h"
@@ -26,19 +27,53 @@ static void menu_show_tick() {
     }
 };
 
+extern const uint8_t _etext;
+
+static void do_profile() {
+    uint8_t* start_addr = (uint32_t*)0x08000000;
+    uint8_t* end_addr = &_etext;
+    uint32_t size = end_addr - start_addr;
+
+    printf("\r\n=== Profiling CRC32 ===");
+    printf("\r\nSections: .isr_vector + .text");
+    printf("\r\nStart: 0x%08X", (uint32_t)start_addr);
+    printf("\r\nEnd:  0x%08X", (uint32_t)end_addr);
+    printf("\r\nSize: %lu byte(s)", size);
+
+    uint32_t start_time, crc, elapsed;
+
+    // SW
+    start_time = systim_current_ms();
+    crc = calculate_CRC32_SW(start_addr, size);
+    elapsed = systim_elapsed_ms(start_time);
+    printf("\r\nSW   : CRC=0x%08X, t=%lu ms", crc, elapsed);
+
+    // HW 8 bit
+    start_time = systim_current_ms();
+    crc = calculate_CRC32_HW_8bit(start_addr, size);
+    elapsed = systim_elapsed_ms(start_time);
+    printf("\r\nHW8  : CRC=0x%08X, t=%lu ms", crc, elapsed);
+
+    // HW 32 bit
+    start_time = systim_current_ms();
+    crc = calculate_CRC32_HW_32bit(start_addr, size);
+    elapsed = systim_elapsed_ms(start_time);
+    printf("\r\nHW32 : CRC=0x%08X, t=%lu ms", crc, elapsed);
+}
+
 static void menu_show_title(void) {
     printf(
         u8"\r\n\n Меню приложения System clock is %ld "
         u8"MHz %s",
         SystemCoreClock / 1000000,
-        u8"\n\r┌────────────┬────────────┬───────────┬────────────┬──────────┐"
-        u8"\n\r│ 1:ShowTick │ 2:         │ 3:        │ 4:         │ 5: Reset │"
-        u8"\n\r└────────────┴────────────┴───────────┴────────────┴──────────┘"
+        u8"\n\r┌────────────┬──────────────────┬───────────┬────────────┬──────────┐"
+        u8"\n\r│ 1:ShowTick │ 2: CRC Profiling │ 3:        │ 4:         │ 5: Reset │"
+        u8"\n\r└────────────┴──────────────────┴───────────┴────────────┴──────────┘"
         u8"\n\r Выбор [1-6] > ");
 };
 
 typedef void (*handler_func_t)();
-handler_func_t handlers[NUM_COMMANDS] = {menu_show_tick, NULL, NULL, NULL,
+handler_func_t handlers[NUM_COMMANDS] = {menu_show_tick, do_profile, NULL, NULL,
                                          NVIC_SystemReset};
 
 /*******************************************************************************
