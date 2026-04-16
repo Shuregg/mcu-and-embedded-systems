@@ -10,6 +10,7 @@
 
 #include "stm32h7xx_ll_bus.h"
 #include "stm32h7xx_ll_gpio.h"
+#include "stm32h7xx_ll_iwdg.h"
 
 void SysTick_Handler() { mytimer_SysTickHandler(); }
 
@@ -154,6 +155,41 @@ void wait_for_blue_button_release() {
     };
     led_off(led_all);
 }
+
+//  *******************************************************************************/
+//  * Independent Watchdog Timer
+//  *******************************************************************************/
+void iwdg_init(void) {
+    // Enable LSI clock (Low-Speed Internal)
+    LL_RCC_LSI_Enable();
+    while (!LL_RCC_LSI_IsReady()) {}
+
+    // 2. Разрешить доступ к регистрам IWDG
+    
+    // Write 0x5555 to IWDG_KR (Unlock access to IWDG registers)
+    LL_IWDG_EnableWriteAccess(IWDG1); 
+    // Write 0xCCCC to IWDG_KR (start IWDT)
+    LL_IWDG_Enable(IWDG1);  
+
+    // Set prescaler (divider) coefficient
+    LL_IWDG_SetPrescaler(IWDG1, LL_IWDG_PRESCALER_64);
+    // Set reload value (RLR)
+    LL_IWDG_SetReloadCounter(IWDG1, 499);
+
+    while (LL_IWDG_IsReady(IWDG1) == 0U) {}
+
+    // Update timer (write 0xAAAA to IWDG_KR)
+    LL_IWDG_ReloadCounter(IWDG1);
+}
+
+void test_watchdog_hang(void) {
+    printf("\r\nThis programm will suspend in 1 second...");
+    systim_delay_ms(1000);
+    printf("\r\nEntering the infinite loop. Please wait for reset from IWDG1...\r\n");
+    while (1) {};
+}
+
+
 /*******************************************************************************
  * Суперцикл *
  *******************************************************************************/
@@ -167,6 +203,7 @@ int main() {
     MyTimer change_led_timer = mytimer_create(500);
     MyTimer menu_timer = mytimer_create(10);
     MyTimer user_button_timer = mytimer_create(400);
+    MyTimer iwdt1_feed_timer = mytimer_create(500);
     while (1) {
         // Задача Heart-Led (отрабатываем режим)
         if (mytimer_is_ready(&heart_rate_timer)) {
@@ -183,6 +220,11 @@ int main() {
         if (mytimer_is_ready(&user_button_timer)) {
             led_mode_handler(&user_button_timer); // Change mode when button is pressed
         }
+        if(mytimer_is_ready(&iwdt1_feed_timer)) {
+            mytimer_restart(&iwdt1_feed_timer);
+            LL_IWDG_ReloadCounter(IWDG1);
+        }
+
         // Сон (Wait for Event)
         __WFE();
     }
