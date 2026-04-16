@@ -107,7 +107,7 @@ void HardFault_Handler() {
         __set_MSP(bootloader_SP);
         bootloader_SP = 0;
         vterm_init(115200);
-        printf("\r\nApplication HardFault exception; SCB->VTOR=0x%8x\r\n", SCB->VTOR);
+        printf("\r\nApplication HardFault exception; SCB->VTOR=0x%8lx\r\n", SCB->VTOR);
     } else {
         puts("\r\nBootloader HardFault exception\r\n");
     }

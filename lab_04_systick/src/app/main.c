@@ -46,6 +46,14 @@ handler_func_t handlers[NUM_COMMANDS] = {menu_show_tick, NULL, NULL, NULL,
  *******************************************************************************/
 
  led_t current_led = led_green;
+
+typedef enum {
+    FORWARD = 0,
+    REVERSE = 1
+} led_mode_e;
+
+led_mode_e current_led_mode = FORWARD;
+
 void hear_rate_handler(MyTimer *timer) {
     mytimer_restart(timer);
     led_toggle(current_led);
@@ -54,6 +62,19 @@ void change_led_handler(MyTimer *timer) {
     mytimer_restart(timer);
     led_off(current_led);
     current_led = current_led == led_green ? led_yellow : led_green;
+
+    switch (current_led)
+    {
+    case led_green:
+        current_led = (current_led_mode == FORWARD) ?  led_red : led_yellow;
+        break;
+    case led_yellow:
+        current_led = (current_led_mode == FORWARD) ?  led_green : led_red;
+        break;
+    case led_red:
+        current_led = (current_led_mode == FORWARD) ?  led_yellow : led_green; 
+        break;
+    }
 }
 void menu_handler(MyTimer *timer) {
     mytimer_restart(timer);
@@ -65,6 +86,21 @@ void menu_handler(MyTimer *timer) {
             handlers[idx]();
         }
         menu_show_title();
+    }
+}
+
+void led_mode_handler(MyTimer *timer) {
+    mytimer_restart(timer);
+    switch (current_led_mode) {
+    case FORWARD:
+        current_led_mode = REVERSE;
+        break;
+    case REVERSE:
+        current_led_mode = FORWARD;
+        break;
+    default:
+        current_led_mode = !current_led_mode;
+        break;
     }
 }
 /*******************************************************************************
@@ -93,8 +129,9 @@ int main() {
     led_enable(led_all);
     menu_show_title();
     MyTimer heart_rate_timer = mytimer_create(500);
-    MyTimer change_led_timer = mytimer_create(3000);
+    MyTimer change_led_timer = mytimer_create(500);
     MyTimer menu_timer = mytimer_create(10);
+    MyTimer user_button_timer = mytimer_create(400);
     while (1) {
         // Задача Heart-Led (отрабатываем режим)
         if (mytimer_is_ready(&heart_rate_timer)) {
@@ -107,6 +144,9 @@ int main() {
         // Задача обработкми меню
         if (mytimer_is_ready(&menu_timer)) {
             menu_handler(&menu_timer);
+        }
+        if (mytimer_is_ready(&user_button_timer)) {
+            led_mode_handler(&user_button_timer); // Change mode when button is pressed
         }
         // Сон (Wait for Event)
         __WFE();
