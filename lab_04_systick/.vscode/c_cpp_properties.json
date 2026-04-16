@@ -1,0 +1,55 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/home/alexander/study/mcu-and-embedded-systems/template_project_1/include",
+                "/home/alexander/study/mcu-and-embedded-systems/template_project_1/src",
+                "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/vterm",
+                "/home/alexander/.platformio/packages/framework-cmsis/CMSIS/Include",
+                "/home/alexander/.platformio/packages/framework-cmsis-stm32h7/Include",
+                "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/LL",
+                "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/user_leds",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/home/alexander/study/mcu-and-embedded-systems/template_project_1/include",
+                    "/home/alexander/study/mcu-and-embedded-systems/template_project_1/src",
+                    "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/vterm",
+                    "/home/alexander/.platformio/packages/framework-cmsis/CMSIS/Include",
+                    "/home/alexander/.platformio/packages/framework-cmsis-stm32h7/Include",
+                    "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/LL",
+                    "/home/alexander/study/mcu-and-embedded-systems/template_project_1/lib/user_leds",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60119",
+                "STM32H7",
+                "STM32H7xx",
+                "STM32H745xx",
+                "CORE_CM7",
+                "PWR_DIRECT_SMPS_SUPPLY",
+                "HSE_VALUE=8000000",
+                "F_CPU=480000000L",
+                "__PLATFORMIO_BUILD_DEBUG__",
+                ""
+            ],
+            "cStandard": "c11",
+            "compilerPath": "/home/alexander/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
+            "compilerArgs": [
+                "-mthumb",
+                "-mcpu=cortex-m7",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
