@@ -5,6 +5,7 @@
 #include <stm32h7xx_ll_exti.h>
 #include <stm32h7xx_ll_gpio.h>
 #include <stm32h7xx_ll_system.h>
+#include "mytimer.h"
 
 #define USE_LL
 /**
