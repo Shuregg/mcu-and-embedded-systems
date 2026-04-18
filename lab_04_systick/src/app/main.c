@@ -33,24 +33,16 @@ static void menu_show_tick() {
 extern const uint8_t _etext;
 
 static void do_profile() {
-    uint8_t etext_tmp = _etext;
-    uint8_t* start_addr = (uint32_t*)0x08000000;
-    uint8_t* end_addr = &etext_tmp;
-    uint32_t size = end_addr - start_addr;
+    uint8_t* start_addr = (uint8_t*)0x08000000;
+    uint32_t size = ((&_etext) - start_addr);
 
     printf("\r\n=== Profiling CRC32 ===");
     printf("\r\nSections: .isr_vector + .text");
-    printf("\r\nStart: 0x%08X", (uint8_t)start_addr);
-    printf("\r\nEnd:  0x%08X", (uint8_t)end_addr);
+    printf("\r\nStart: 0x%lx", (uint32_t)start_addr);
+    printf("\r\nEnd:   0x%lx", (uint32_t)(&_etext));
     printf("\r\nSize: %lu byte(s)", size);
 
     uint32_t start_time, crc, elapsed;
-
-    // SW
-    start_time = systim_current_ms();
-    crc = calculate_CRC32_SW(start_addr, size);
-    elapsed = systim_elapsed_ms(start_time);
-    printf("\r\nSW   : CRC=0x%08lX, t=%lu ms", crc, elapsed);
 
     // HW 8 bit
     start_time = systim_current_ms();
@@ -63,6 +55,13 @@ static void do_profile() {
     crc = calculate_CRC32_HW_32bit(start_addr, size);
     elapsed = systim_elapsed_ms(start_time);
     printf("\r\nHW32 : CRC=0x%08lX, t=%lu ms", crc, elapsed);
+
+    // SW
+    start_time = systim_current_ms();
+    crc = calculate_CRC32_SW(start_addr, size);
+    elapsed = systim_elapsed_ms(start_time);
+    printf("\r\nSW   : CRC=0x%08lX, t=%lu ms", crc, elapsed);
+
 }
 
 static void menu_show_title(void) {
@@ -100,8 +99,6 @@ void hear_rate_handler(MyTimer *timer) {
 void change_led_handler(MyTimer *timer) {
     mytimer_restart(timer);
     led_off(current_led);
-    current_led = current_led == led_green ? led_yellow : led_green;
-
     switch (current_led)
     {
     case led_green:
@@ -113,8 +110,6 @@ void change_led_handler(MyTimer *timer) {
     case led_red:
         current_led = (current_led_mode == FORWARD) ?  led_yellow : led_green; 
         break;
-    default:
-        current_led = led_green;
     }
 }
 void menu_handler(MyTimer *timer) {
@@ -131,17 +126,19 @@ void menu_handler(MyTimer *timer) {
 }
 
 void led_mode_handler(MyTimer *timer) {
-    mytimer_restart(timer);
-    switch (current_led_mode) {
-    case FORWARD:
-        current_led_mode = REVERSE;
-        break;
-    case REVERSE:
-        current_led_mode = FORWARD;
-        break;
-    default:
-        current_led_mode = !current_led_mode;
-        break;
+    if(LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13)) {
+        mytimer_restart(timer);
+        switch (current_led_mode) {
+            case FORWARD:
+            current_led_mode = REVERSE;
+            break;
+            case REVERSE:
+            current_led_mode = FORWARD;
+            break;
+            default:
+            current_led_mode = !current_led_mode;
+            break;
+        }
     }
 }
 /*******************************************************************************
@@ -205,7 +202,7 @@ int main() {
     led_enable(led_all);
     menu_show_title();
     MyTimer heart_rate_timer = mytimer_create(500);
-    MyTimer change_led_timer = mytimer_create(500);
+    MyTimer change_led_timer = mytimer_create(1000);
     MyTimer menu_timer = mytimer_create(10);
     MyTimer user_button_timer = mytimer_create(400);
     MyTimer iwdt1_feed_timer = mytimer_create(500);
