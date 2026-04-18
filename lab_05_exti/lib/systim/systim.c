@@ -20,7 +20,8 @@ void systim_init(uint32_t mcu_clock) {
     SysTick->LOAD  = (uint32_t)((mcu_clock / 1000U) - 1UL); /* set reload register */
     SysTick->VAL   = 0UL;                                   /* Load the SysTick Counter Value */
     SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
-                     SysTick_CTRL_ENABLE_Msk;               /* Enable the Systick Timer */
+                     SysTick_CTRL_ENABLE_Msk    |           /* Enable the Systick Timer */
+                     SysTick_CTRL_TICKINT_Msk;
 
 }
 
