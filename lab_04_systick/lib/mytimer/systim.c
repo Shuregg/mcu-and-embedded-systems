@@ -4,7 +4,7 @@
 static volatile uint32_t g_sys_counter_ms = 0;
 static uint32_t g_ticks_in_us = 0;
 
-void SysTick_Handler() {
+void systim_SysTick_Handler() {
     g_sys_counter_ms += 1;
 }
 uint32_t systim_current_ms() {

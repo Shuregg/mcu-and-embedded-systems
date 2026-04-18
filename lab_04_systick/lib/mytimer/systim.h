@@ -25,6 +25,8 @@ void systim_delay_ms(uint32_t ms);
 // Активное ожидание не менее us микросекунд
 void systim_delay_us(uint32_t us);
 
+void systim_SysTick_Handler();
+
 #ifdef __cplusplus
 }
 #endif

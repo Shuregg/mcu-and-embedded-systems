@@ -1,5 +1,5 @@
 #include <stm32h7xx.h>  // основной заголовочный файл CMSIS для МК серии H7
-#include <led.h>
+#include <user_leds.h>
 #include <vterm.h>
 #include <stdio.h>
 

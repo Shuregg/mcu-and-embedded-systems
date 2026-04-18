@@ -2,6 +2,7 @@
  * Пример планировщика на базе программных таймеров
  */
 #include "user_leds.h"
+#include "systim.h"
 #include "mytimer.h"
 #include "stm32h7xx.h"
 #include "vterm.h"
@@ -11,8 +12,9 @@
 #include "stm32h7xx_ll_bus.h"
 #include "stm32h7xx_ll_gpio.h"
 #include "stm32h7xx_ll_iwdg.h"
+#include "stm32h7xx_ll_rcc.h"
 
-void SysTick_Handler() { mytimer_SysTickHandler(); }
+void SysTick_Handler() { systim_SysTick_Handler(); }
 
 /*******************************************************************************
  * Программное меню *
@@ -20,7 +22,7 @@ void SysTick_Handler() { mytimer_SysTickHandler(); }
 
  #define NUM_COMMANDS 5
 static void menu_show_tick() {
-    uint32_t tick = mytimer_get_tick_counter();
+    uint32_t tick = systim_current_ms();
     if (tick) {
         printf(u8"\nВремя работы %ld.%ld секунд", tick / 1000, tick % 1000);
     } else {
@@ -31,14 +33,15 @@ static void menu_show_tick() {
 extern const uint8_t _etext;
 
 static void do_profile() {
+    uint8_t etext_tmp = _etext;
     uint8_t* start_addr = (uint32_t*)0x08000000;
-    uint8_t* end_addr = &_etext;
+    uint8_t* end_addr = &etext_tmp;
     uint32_t size = end_addr - start_addr;
 
     printf("\r\n=== Profiling CRC32 ===");
     printf("\r\nSections: .isr_vector + .text");
-    printf("\r\nStart: 0x%08X", (uint32_t)start_addr);
-    printf("\r\nEnd:  0x%08X", (uint32_t)end_addr);
+    printf("\r\nStart: 0x%08X", (uint8_t)start_addr);
+    printf("\r\nEnd:  0x%08X", (uint8_t)end_addr);
     printf("\r\nSize: %lu byte(s)", size);
 
     uint32_t start_time, crc, elapsed;
@@ -47,19 +50,19 @@ static void do_profile() {
     start_time = systim_current_ms();
     crc = calculate_CRC32_SW(start_addr, size);
     elapsed = systim_elapsed_ms(start_time);
-    printf("\r\nSW   : CRC=0x%08X, t=%lu ms", crc, elapsed);
+    printf("\r\nSW   : CRC=0x%08lX, t=%lu ms", crc, elapsed);
 
     // HW 8 bit
     start_time = systim_current_ms();
     crc = calculate_CRC32_HW_8bit(start_addr, size);
     elapsed = systim_elapsed_ms(start_time);
-    printf("\r\nHW8  : CRC=0x%08X, t=%lu ms", crc, elapsed);
+    printf("\r\nHW8  : CRC=0x%08lX, t=%lu ms", crc, elapsed);
 
     // HW 32 bit
     start_time = systim_current_ms();
     crc = calculate_CRC32_HW_32bit(start_addr, size);
     elapsed = systim_elapsed_ms(start_time);
-    printf("\r\nHW32 : CRC=0x%08X, t=%lu ms", crc, elapsed);
+    printf("\r\nHW32 : CRC=0x%08lX, t=%lu ms", crc, elapsed);
 }
 
 static void menu_show_title(void) {
@@ -110,6 +113,8 @@ void change_led_handler(MyTimer *timer) {
     case led_red:
         current_led = (current_led_mode == FORWARD) ?  led_yellow : led_green; 
         break;
+    default:
+        current_led = led_green;
     }
 }
 void menu_handler(MyTimer *timer) {
@@ -196,7 +201,7 @@ void test_watchdog_hang(void) {
 int main() {
     wait_for_blue_button_release();
     vterm_init(115200);
-    mytimer_init(SystemCoreClock);
+    systim_init(SystemCoreClock);
     led_enable(led_all);
     menu_show_title();
     MyTimer heart_rate_timer = mytimer_create(500);
