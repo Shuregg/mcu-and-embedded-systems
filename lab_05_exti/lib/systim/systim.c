@@ -52,7 +52,7 @@ void systim_delay_ms(uint32_t ms) {
     #endif
 }
 
-void systim_delay_us(uint32_t us) {
+void systim_delay_mcs(uint32_t us) {
     uint32_t count;
     if (us != SYSTIM_MAX_DELAY)
         us++;

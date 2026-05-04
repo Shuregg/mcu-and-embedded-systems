@@ -13,7 +13,7 @@ void mytimer_restart(MyTimer *timer) {
 void mytimer_reset(MyTimer *timer, uint32_t period) {
     if (period == 0U)
         period++;
-    timer->period_ms  = period;
+    timer->period_ms = period;
     mytimer_restart(timer);
 }
 

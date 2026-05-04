@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "systim.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,18 +10,11 @@ extern "C" {
 
 /************************* Программные таймеры **************************** */
 typedef struct MyTimer_Struct {
-    uint32_t start_tick;
-    uint32_t period_ms;
+    uint32_t start_tick, period_ms;
 } MyTimer;
 
 /** Создает и запускает таймер */
 MyTimer mytimer_create(uint32_t period_ms);
-
-#if 0
-void mytimer_init(uint32_t core_clock);
-#endif
-
-uint32_t mytimer_get_tick_counter();
 
 /** Перезапускает таймер (начать измерние заново) */
 void mytimer_restart(MyTimer *timer);
