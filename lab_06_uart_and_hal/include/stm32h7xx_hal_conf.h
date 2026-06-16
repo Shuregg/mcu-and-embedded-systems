@@ -8,7 +8,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017 STMicroelectronics.
+  * Copyright (c) 2017 STMicroelectronicsAL_MODULE_ENABLED.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -33,29 +33,29 @@
 /**
   * @brief This is the list of modules to be used in the HAL driver
   */
-#define HAL_MODULE_ENABLED
+#define HAL_MODULE_ENABLED //
 // #define HAL_ADC_MODULE_ENABLED
 // #define HAL_CEC_MODULE_ENABLED
 // #define HAL_COMP_MODULE_ENABLED
 // #define HAL_CORDIC_MODULE_ENABLED
-#define HAL_CORTEX_MODULE_ENABLED
+#define HAL_CORTEX_MODULE_ENABLED //
 // #define HAL_CRC_MODULE_ENABLED
 // #define HAL_CRYP_MODULE_ENABLED
 // #define HAL_DAC_MODULE_ENABLED
 // #define HAL_DCMI_MODULE_ENABLED
 // #define HAL_DFSDM_MODULE_ENABLED
-#define HAL_DMA_MODULE_ENABLED
+#define HAL_DMA_MODULE_ENABLED //
 // #define HAL_DMA2D_MODULE_ENABLED
 // #define HAL_DTS_MODULE_ENABLED
 // #define HAL_DSI_MODULE_ENABLED
 // #define HAL_ETH_MODULE_ENABLED
-/* #define HAL_ETH_LEGACY_MODULE_ENABLED */
-#define HAL_EXTI_MODULE_ENABLED
+// /* #define HAL_ETH_LEGACY_MODULE_ENABLED */
+#define HAL_EXTI_MODULE_ENABLED //
 // #define HAL_FDCAN_MODULE_ENABLED
 // #define HAL_FLASH_MODULE_ENABLED
 // #define HAL_GFXMMU_MODULE_ENABLED
 // #define HAL_FMAC_MODULE_ENABLED
-#define HAL_GPIO_MODULE_ENABLED
+#define HAL_GPIO_MODULE_ENABLED //
 // #define HAL_HASH_MODULE_ENABLED
 // #define HAL_HCD_MODULE_ENABLED
 // #define HAL_HRTIM_MODULE_ENABLED
@@ -80,7 +80,7 @@
 // #define HAL_PSSI_MODULE_ENABLED
 // #define HAL_QSPI_MODULE_ENABLED
 // #define HAL_RAMECC_MODULE_ENABLED
-#define HAL_RCC_MODULE_ENABLED
+#define HAL_RCC_MODULE_ENABLED //
 // #define HAL_RNG_MODULE_ENABLED
 // #define HAL_RTC_MODULE_ENABLED
 // #define HAL_SAI_MODULE_ENABLED
@@ -94,8 +94,8 @@
 // #define HAL_SRAM_MODULE_ENABLED
 // #define HAL_SWPMI_MODULE_ENABLED
 // #define HAL_TIM_MODULE_ENABLED
-#define HAL_UART_MODULE_ENABLED
-#define HAL_USART_MODULE_ENABLED
+#define HAL_UART_MODULE_ENABLED //
+#define HAL_USART_MODULE_ENABLED //
 // #define HAL_WWDG_MODULE_ENABLED
 
 /* ########################## Oscillator Values adaptation ####################*/
@@ -500,37 +500,20 @@
 #endif /* HAL_HCD_MODULE_ENABLED */
 
 /* Exported macro ------------------------------------------------------------*/
-#if USE_CUSTOM_ASSSERTIONS
-  #ifdef USE_FULL_ASSERT
-    #include <assert.h>
-    #define assert_param(expr) \
-    ((expr) ? (void)0U : __assert_func(__FILE__, __LINE__, __ASSERT_FUNC, #expr))
-    void assert_failed(uint8_t *file, uint32_t line);
-  #else
-    #define assert_param(expr) ((void)0U)
-  #endif /* USE_FULL_ASSERT */
+#ifdef USE_FULL_ASSERT
+#include <assert.h>
+#define assert_param(expr) \
+((expr) ? (void)0U : __assert_func(__FILE__, __LINE__, __ASSERT_FUNC, #expr))
+void assert_failed(uint8_t *file, uint32_t line);
 #else
-  #ifdef  USE_FULL_ASSERT
-  /**
-    * @brief  The assert_param macro is used for function's parameters check.
-    * @param  expr: If expr is false, it calls assert_failed function
-    *         which reports the name of the source file and the source
-    *         line number of the call that failed.
-    *         If expr is true, it returns no value.
-    * @retval None
-    */
-    #define assert_param(expr) ((expr) ? (void)0U : assert_failed((uint8_t *)__FILE__, __LINE__))
-  /* Exported functions ------------------------------------------------------- */
-    void assert_failed(uint8_t *file, uint32_t line);
-  #else
-    #define assert_param(expr) ((void)0U)
-  #endif /* USE_FULL_ASSERT */
-
-#endif
-
+#define assert_param(expr) ((void)0U)
+#endif /* USE_FULL_ASSERT */
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* STM32H7xx_HAL_CONF_H */
+
+
+

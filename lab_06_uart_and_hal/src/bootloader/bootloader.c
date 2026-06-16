@@ -54,16 +54,16 @@ int main() {
     printf("\n\n\r\n Welcome to bootloader! %s", menu_title);
     for (uint8_t menu_index = NO_KEYPRESSED; true; menu_index = read_index()) {
         if (menu_index == NO_KEYPRESSED) {
-            if (ready_for_autoboot) {
-                // Обработка до первого нажатия клавиши
-                if (++autoboot_counter == AUTOSTART_TIMEOUT_COUNTER) {
-                    do_BootSRAM();
-                } else if (autoboot_counter > AUTOSTART_TIMEOUT_COUNTER / 10 * autoboot_div10_counter) {
-                    autoboot_div10_counter += 1;
-                    printf(u8"\rНажмите любую клавишу чтобы прервать автозагрузку AXI-SRAM  %d",
-                           10 - autoboot_div10_counter);
-                }
-            }
+            // if (ready_for_autoboot) {
+            //     // Обработка до первого нажатия клавиши
+            //     if (++autoboot_counter == AUTOSTART_TIMEOUT_COUNTER) {
+            //         do_BootSRAM();
+            //     } else if (autoboot_counter > AUTOSTART_TIMEOUT_COUNTER / 10 * autoboot_div10_counter) {
+            //         autoboot_div10_counter += 1;
+            //         printf(u8"\rНажмите любую клавишу чтобы прервать автозагрузку AXI-SRAM  %d",
+            //                10 - autoboot_div10_counter);
+            //     }
+            // }
         } else {
             // Обработка нажатия клавиши
             ready_for_autoboot = false;  // stop auto boot
