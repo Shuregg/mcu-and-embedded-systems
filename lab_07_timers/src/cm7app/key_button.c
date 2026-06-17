@@ -1,6 +1,8 @@
 #include "key_button.h"
 #include <stm32h7xx_hal.h>
-void Key_Button_Init() {
+
+void Key_Button_EXTI_Init()
+{
     KEY_BUTTON_CLK_ENABLE();
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = KEY_BUTTON_PIN;

@@ -1,13 +1,14 @@
 #pragma once
 #include "stm32h7xx_hal.h"
 // Конфигурация таймера
-#define TIMm TIM15
+#define TIMm TIM5
 #define TIMm_CHANNEL TIM_CHANNEL_1
-#define TIMm_PRESCALER (64000 - 1) // 1 КГц
+#define TIMm_PRESCALER (64 - 1)  // 1 КГц
 #define TIMm_PERIOD (65535)
-#define TIMm_CLK_ENABLE __HAL_RCC_TIM15_CLK_ENABLE
-#define TIMm_IRQn TIM15_IRQn
-#define TIMm_IRQHandler TIM15_IRQHandler
+#define TIMm_CLK_ENABLE __HAL_RCC_TIM5_CLK_ENABLE
+#define TIMm_IRQn TIM5_IRQn
+#define TIMm_IRQHandler TIM5_IRQHandler
+
 // Конфигурация DMA
 #define TIMm_DMAx DMA2
 #define TIMm_DMA_STREAM DMA2_Stream1
@@ -15,13 +16,15 @@
 #define TIMm_DMA_IRQn DMA2_Stream1_IRQn
 #define TIMm_DMA_IRQHandler DMA2_Stream1_IRQHandler
 #define TIMm_DMA_ID TIM_DMA_ID_CC1
-#define TIMm_DMA_REQUEST DMA_REQUEST_TIM15_CH1
+#define TIMm_DMA_REQUEST DMA_REQUEST_TIM5_CH1
 #define TIMm_DMA_ACTIVE_CHANNEL HAL_TIM_ACTIVE_CHANNEL_1
 // Входной пин PA0
-#define TIMm_CH_PORT GPIOE
-#define TIMm_CH_PIN GPIO_PIN_5
-#define TIMm_CH_CLK_ENABLE __HAL_RCC_GPIOE_CLK_ENABLE
-#define TIMm_CH_GPIO_AF GPIO_AF4_TIM15
+#define TIMm_CH_PORT GPIOA
+
+#define TIMm_CH_PIN GPIO_PIN_0
+#define TIMm_CH_CLK_ENABLE __HAL_RCC_GPIOA_CLK_ENABLE
+#define TIMm_CH_GPIO_AF GPIO_AF2_TIM5
+
 extern TIM_HandleTypeDef hTimMesure;
 /** Инициализация таймера в режим Input Capture Compare */
 void Tim_Mesure_Init();

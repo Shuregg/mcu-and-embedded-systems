@@ -8,3 +8,6 @@ void TIMp_IRQHandler()
 {
     HAL_TIM_IRQHandler(&hTimPulse);
 }
+
+void TIMm_IRQHandler() { HAL_TIM_IRQHandler(&hTimMesure); }
+void TIMm_DMA_IRQHandler(void) { HAL_DMA_IRQHandler(hTimMesure.hdma[TIMm_DMA_ID]); }

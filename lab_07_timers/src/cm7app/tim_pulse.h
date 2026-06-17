@@ -2,8 +2,8 @@
 #include <stm32h7xx_hal.h>
 #define TIMp TIM3
 #define TIMp_CHANNEL TIM_CHANNEL_3
-#define TIMp_PRESCALER (64000-1) /* 1 КГц */
-#define TIMp_PERIOD (3000 -1) /* UE каждые 3 c */
+#define TIMp_PRESCALER (128 - 1) /* 1 КГц */
+#define TIMp_PERIOD    (10 - 1)     /* UE каждые 3 c */
 #define TIMp_CLK_ENABLE __HAL_RCC_TIM3_CLK_ENABLE
 #define TIMp_IRQn TIM3_IRQn
 #define TIMp_IRQHandler TIM3_IRQHandler

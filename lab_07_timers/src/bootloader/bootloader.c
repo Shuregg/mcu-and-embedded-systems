@@ -1,21 +1,19 @@
 /**
  * @file bootloader.c
  * @author S.B. Simonov
- * @date 22.05.2026
+ * @date 20.04.2026
  *  Автозагрузчик приложения из AXI-SRAM с перехватом HardFault и опцией запуска ядра СM4  */
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stm32h7xx.h>
 #include <vterm.h>
-#include <led.h>
-#include "dwt.h"
 
 #define AXI_SRAM_BEGIN_ADDR 0x24000000
 #define AXI_SRAM_END_ADDR 0x24080000
 #define APP_BEGIN_ADDR 0x24000000
 #define APP_STACK_ADDR 0x24080000
-#define AUTOSTART_TIMEOUT_COUNTER 2500000
+#define AUTOSTART_TIMEOUT_COUNTER 5000000
 #define NO_KEYPRESSED UINT8_MAX
 #define NUM_COMMANDS 3
 #define IN_BOUNDS(BOTTOM, VAL, TOP) ((VAL) >= (BOTTOM) && (VAL) <= (TOP))
@@ -29,10 +27,10 @@ void do_RunCM4();
 /***************************** Boot Menu ************************************/
 
 const char* menu_title =
-    u8"\r\n\r\n Мини загрузчик"
-    u8"\n\r┌──────────────────┬────────────┬──────────┐"
-    u8"\n\r│ 1: Boot AXI-SRAM │ 2: Run CM4 │ 3: Reset │"
-    u8"\n\r└──────────────────┴────────────┴──────────┘"
+    u8"\n\r Welcome to bootloader"
+    u8"\n\r┌─────────────┬─────────────┬────────────┐"
+    u8"\n\r│ 1:Boot SRAM │ 2: Run CM4  │ 3: Reset   │"
+    u8"\n\r└─────────────┴─────────────┴────────────┘"
     u8"\n\r Выбор [1-3] > ";
 
 void (*handlers[NUM_COMMANDS])() = {do_BootSRAM, do_RunCM4, NVIC_SystemReset};
@@ -49,23 +47,21 @@ uint8_t read_index() {
 /***************************** Main Loop ************************************/
 int main() {
     vterm_init(115200);
-    dwt_enable();
-    int led_index = 0;
-    led_enable(led_all);
     bool ready_for_autoboot =
         check_app_is_valid(APP_BEGIN_ADDR, APP_STACK_ADDR, AXI_SRAM_BEGIN_ADDR, AXI_SRAM_END_ADDR);
     int autoboot_counter = 0;
     int autoboot_div10_counter = 0;
-    puts(menu_title);
+    printf("\n\n\r\n Welcome to bootloader! %s", menu_title);
     for (uint8_t menu_index = NO_KEYPRESSED; true; menu_index = read_index()) {
         if (menu_index == NO_KEYPRESSED) {
             if (ready_for_autoboot) {
                 // Обработка до первого нажатия клавиши
                 if (++autoboot_counter == AUTOSTART_TIMEOUT_COUNTER) {
                     do_BootSRAM();
-                } else if (autoboot_counter > AUTOSTART_TIMEOUT_COUNTER / 5 * autoboot_div10_counter) {
+                } else if (autoboot_counter > AUTOSTART_TIMEOUT_COUNTER / 10 * autoboot_div10_counter) {
                     autoboot_div10_counter += 1;
-                    printf(u8"\r Автозапуск AXI-SRAM: %d", 5 - autoboot_div10_counter);
+                    printf(u8"\rНажмите любую клавишу чтобы прервать автозагрузку AXI-SRAM  %d",
+                           10 - autoboot_div10_counter);
                 }
             }
         } else {
@@ -74,16 +70,8 @@ int main() {
             if (menu_index < NUM_COMMANDS && handlers[menu_index]) {
                 handlers[menu_index]();
             }
-            puts(menu_title);
+            printf("\r\n Welcome to bootloader! %s", menu_title);
         }
-
-        if (dwt_get_mcs()> 50000){
-            dwt_start();
-            led_off(1 << led_index);
-            led_index = (led_index+1) % 3;
-            led_on(1 << led_index);
-        }
-        
     }  // for
     return 0;
 }
@@ -95,22 +83,19 @@ bool check_app_is_valid(uint32_t iv_address, uint32_t sp_address, uint32_t ram_b
            IN_BOUNDS(ram_begin, app_IV[1], ram_end);
 }
 
-
 void do_RunCM4() {
     SET_BIT(RCC->GCR, RCC_GCR_BOOT_C2);
 }
 
 void do_BootSRAM() {
-    if (!check_app_is_valid(APP_BEGIN_ADDR, APP_STACK_ADDR, AXI_SRAM_BEGIN_ADDR, AXI_SRAM_END_ADDR)) {
-        printf(u8"\n Приложение AXI-SRAM не найдено по адресу 0x%08x\n", APP_BEGIN_ADDR);
-        NVIC_SystemReset();
+    if (check_app_is_valid(APP_BEGIN_ADDR, APP_STACK_ADDR, AXI_SRAM_BEGIN_ADDR, AXI_SRAM_END_ADDR)) {
+        printf("\n No valid application in AXI-SRAM at 0x%08x found!\n", APP_BEGIN_ADDR);
+        return;
     }
-    led_off(led_all);
-    led_disable(led_all);
     const uint32_t* app_IV = (uint32_t*)APP_BEGIN_ADDR;
     uint32_t app_end_stack = app_IV[0];
     void* app_entry = (void*)app_IV[1];
-    printf(u8"\r\n Запуск приложения по адресу %p...\n\n", app_entry);
+    printf("\r\n Jumping to AXI-SRAM application Reset Handeler at %p...\n", app_entry);
     bootloader_SP = __get_MSP();
     __disable_irq();
     __set_MSP(app_end_stack);
@@ -124,25 +109,13 @@ void do_BootSRAM() {
 }
 
 /***************************** HardFault_Handler() ************************************/
-
-static void error_state(){
-    led_enable(led_all);
-    led_off(led_all);
-    dwt_enable();
-    while(1) {
-        led_toggle(led_red);
-        dwt_delay_mcs(100000);
-    }
-}
-
 void HardFault_Handler() {
     if (bootloader_SP) {
         __set_MSP(bootloader_SP);
         vterm_init(115200);
         printf("\r\nApplication HardFault exception; SCB->VTOR=%p\r\n", (void*)SCB->VTOR);
-        error_state();
     } else {
         puts("\r\nBootloader HardFault exception\r\n");
-        error_state();
     }
+    NVIC_SystemReset();
 }

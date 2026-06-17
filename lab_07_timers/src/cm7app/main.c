@@ -1,5 +1,7 @@
 #include "main.h"
 #include <stdio.h>
+#include "tim_mesure.h"
+uint32_t current_distance;
 
 int main()
 {
@@ -9,20 +11,54 @@ int main()
     Tim_Pulse_Init();
     Tim_Mesure_Init();
     Tim_Mesure_Start();
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_0;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_SET);
+
     printf("\r\nPress B1 to generate pulse on PC8 and mesure it on PE5\r\n");
     __NOP();
     while (1)
     {
-        if (Tim_Mesure_Wait_Once(1000))
+        Tim_Pulse_Start();
+        if (Tim_Mesure_Wait_Once(50))
         {
-            int time_ms = Tim_Mesure_GetDiff();
-            printf("\r\nMesured Pulse Time = %d\r\n", time_ms);
-        }
-        else
-        {
-            printf("\r\nwaiting...");
-        }
+            uint32_t pulse_us = Tim_Mesure_GetDiff();
+            uint32_t distance_cm = pulse_us / 58;
+
+            if (distance_cm < 10)
+            {
+                led_on(led_red);
+                led_off(led_yellow);
+                led_off(led_green);
+            }
+            else if (distance_cm < 20)
+            {
+                led_off(led_red);
+                led_on(led_yellow);
+                led_off(led_green);
+            }
+            else
+            {
+                led_on(led_red);
+                led_on(led_yellow);
+                led_off(led_green);
+            }
+
+            current_distance = distance_cm;
+        } 
     }
+    /* 2 Hz */
+    HAL_Delay(500);
     return 0;
 }
 
@@ -39,7 +75,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if (GPIO_Pin == KEY_BUTTON_PIN)
     {
-        Tim_Pulse_Start();
+        printf("Distance = %lu cm\r\n", current_distance);
     }
 }
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
@@ -53,4 +89,9 @@ void HAL_TIM_ErrorCallback(TIM_HandleTypeDef *htim)
 {
     (void)htim;
     error_freeze();
+}
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+    Tim_Mesure_IC_Callback(htim);
 }
